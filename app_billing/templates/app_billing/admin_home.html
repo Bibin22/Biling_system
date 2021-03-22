@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="search">
+</form>
+<table>
+        <tr>
+            <td>Bill Number</td>
+             <td>Product Name</td>
+             <td>Product Quantity</td>
+             <td>Ammount</td>
+        </tr>
+         {% for item in items %}
+        <tr>
+
+            <td>{{ item.bill_number }}</td>
+             <td>{{ item.product_name }}</td>
+             <td>{{ item.product_qty }}</td>
+             <td>{{ item.amount }}</td>
+
+        </tr>
+        {% endfor %}
+</table>
+<h1>Todays Saled Items</h1>
+<table>
+    <tr>
+        <td>Bill Number</td>
+        <td>Products</td>
+    </tr>
+    {% for product in products %}
+    <tr>
+        <td>{{ product.bill_number }}</td>
+        <td>{{ product.product_name }}</td>
+    </tr>
+    {% endfor %}
+</table>
+</body>
+</html>
