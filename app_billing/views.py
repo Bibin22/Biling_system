@@ -7,6 +7,7 @@ from django.db.models import Sum
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from datetime import date
+
 class ItemCreate(TemplateView):
     model = Items
     template_name = 'app_billing/item_create.html'
@@ -229,7 +230,7 @@ class LoginView(TemplateView):
             user = authenticate(username=uname, password=pwd)
             if user != None:
                 login(request,user)
-                return redirect('ordercreate')
+                return redirect('dsales')
             else:
                 self.context = {
 
@@ -242,7 +243,7 @@ class LoginView(TemplateView):
 class SearchView(TemplateView):
     model = OrderLine
     form_class = SearchForm
-    template_name = 'app_billing/admin_home.html'
+    template_name = 'app_billing/search.html'
     def get(self, request, *args, **kwargs):
         form = self.form_class
         self.context = {
@@ -267,10 +268,10 @@ class DailySales(TemplateView):
     template_name = 'app_billing/admin_home.html'
     def get(self, request, *args, **kwargs):
         dates = date.today()
-        tbill = Order.objects.get(bill_date=dates)
-        billnumber = tbill.billnumber
-        products = OrderLine.objects.filter(bill_number__billnumber=billnumber)
+        tbill = Order.objects.filter(bill_date=dates)
+
+        products = OrderLine.objects.filter(bill_number__billnumber__in=[t.billnumber for t in tbill])
         self.context = {
-            "products":products
+            "products":products,
         }
         return render(request, self.template_name, self.context)

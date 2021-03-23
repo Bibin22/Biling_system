@@ -1,9 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
+{% extends 'app_billing/admin_base.html' %}
+{% block body_block %}
 <body>
 <table align="center">
     <tr>
@@ -17,6 +13,4 @@
         <td><a href="{% url 'itemdelete' item.id %}"> Delete </a> </td>
     </tr>
     {% endfor %}
-</table>
-</body>
-</html>
+{% endblock %}
