@@ -6,15 +6,18 @@ from django.views.generic import TemplateView
 from django.db.models import Sum
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
-from datetime import date
+from datetime import datetime,date
+from django.db.models import Q
 
 class ItemCreate(TemplateView):
     model = Items
     template_name = 'app_billing/item_create.html'
     form_class = ItemCreateForm
     def get(self, request, *args, **kwargs):
+        items = Items.objects.all()
         self.context = {
-            "form": self.form_class
+            "form": self.form_class,
+            "items":items
         }
         return render(request, self.template_name, self.context)
 
@@ -22,10 +25,10 @@ class ItemCreate(TemplateView):
         form = self.form_class(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('itemview')
+            return redirect('item')
         return render(request, self.template_name, self.context)
 
-class ItemView(TemplateView):
+"""class ItemView(TemplateView):
     model = Items
     template_name = 'app_billing/item_view.html'
     def get(self, request, *args, **kwargs):
@@ -33,7 +36,7 @@ class ItemView(TemplateView):
         self.context = {
             'items': items
         }
-        return render(request,self.template_name, self.context)
+        return render(request,self.template_name, self.context)"""
 
 class ItemDelete(TemplateView):
     model = Items
@@ -44,25 +47,27 @@ class ItemDelete(TemplateView):
         id = kwargs.get("pk")
         item = self.get_object(id)
         item.delete()
-        return redirect('itemview')
+        return redirect('item')
 
 class PurchaseCreate(TemplateView):
     model = Purchase
     template_name = 'app_billing/purchase_create.html'
     form_class = PurchaceCreateForm
     def get(self, request, *args, **kwargs):
+        products = self.model.objects.all()
         self.context = {
-            "form":self.form_class
+            "form":self.form_class,
+            "products":products,
         }
         return render(request, self.template_name, self.context)
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('purchaseview')
+            return redirect('productcreate')
         return render(request, self.template_name, self.context)
 
-class PurchaseView(TemplateView):
+"""class PurchaseView(TemplateView):
     model = Purchase
     template_name = 'app_billing/purchase_view.html'
     def get(self, request, *args, **kwargs):
@@ -70,7 +75,7 @@ class PurchaseView(TemplateView):
         self.context = {
             'products':products,
         }
-        return render(request, self.template_name, self.context)
+        return render(request, self.template_name, self.context)"""
 
 class PurchaseEdit(TemplateView):
     model = Purchase
@@ -93,10 +98,10 @@ class PurchaseEdit(TemplateView):
         form = self.form_class(request.POST, instance=products)
         if form.is_valid():
             form.save()
-            return redirect('purchaseview')
+            return redirect('productcreate')
         return render(request, self.template_name, self.context)
 
-class PurchaseDetailedView(TemplateView):
+"""class PurchaseDetailedView(TemplateView):
     model = Purchase
     template_name = 'app_billing/purchase_detailedview.html'
     def get_object(self, id):
@@ -107,7 +112,7 @@ class PurchaseDetailedView(TemplateView):
         self.context = {
             'items':items,
         }
-        return render(request, self.template_name, self.context)
+        return render(request, self.template_name, self.context)"""
 
 class PurchaseDelete(TemplateView):
     model = Purchase
@@ -117,7 +122,7 @@ class PurchaseDelete(TemplateView):
         id = kwargs.get('pk')
         product = self.get_object(id)
         product.delete()
-        return redirect('purchaseview')
+        return redirect('productcreate')
 
 class OrderCreate(TemplateView):
     model = Order
@@ -180,16 +185,29 @@ class OrderLineCreate(TemplateView):
 
 class BillGenrate(TemplateView):
     model = Order
+    context = {}
+    template_name = 'app_billing/billdisplay.html'
 
     def get(self, request, *args, **kwargs):
-        billnum = kwargs.get("billnumber")
-        order = self.model.objects.get(billnumber=billnum)
+        billnum = kwargs.get('billnumber')
+        orderlines = OrderLine.objects.filter(bill_number__billnumber=billnum)
         total = OrderLine.objects.filter(bill_number__billnumber=billnum).aggregate(Sum('amount'))
-        total = total["amount__sum"]
-        order.bill_total=total
-        order.save()
-        print("bill saved")
+        self.context = {
+            'billnum':billnum,
+            'orderlines':orderlines,
+            'total':total['amount__sum'],
+        }
+        return render(request, self.template_name, self.context)
+
+    def post(self, request, *args, **kwargs):
+        bill_number = kwargs.get('billnumber')
+        ordr = self.model.objects.get(billnumber=bill_number)
+        total = OrderLine.objects.filter(bill_number__billnumber=bill_number).aggregate(Sum('amount'))
+        total = total['amount__sum']
+        ordr.bill_total = total
+        ordr.save()
         return redirect('ordercreate')
+
 
 class Registration(TemplateView):
     form_class = RegistrationForm
@@ -271,7 +289,75 @@ class DailySales(TemplateView):
         tbill = Order.objects.filter(bill_date=dates)
 
         products = OrderLine.objects.filter(bill_number__billnumber__in=[t.billnumber for t in tbill])
+
+        
         self.context = {
             "products":products,
+
         }
         return render(request, self.template_name, self.context)
+
+
+
+class adminpagecontent(TemplateView):
+    template_name = 'app_billing/admin.html'
+
+    def get(self, request, *args, **kwargs):
+        context={}
+
+        #   pie chart
+
+        list, countlist, countvalues, datelist, datevalues = [], [], [], [], []
+        dict = {}
+        for object in Order.objects.all():
+
+            if object.bill_date not in list:
+                list.append(object.bill_date)
+        for date in list:
+            result = Order.objects.filter(bill_date=date).count()
+            dict[str(date)] = result
+            countlist.append(result)
+        dict = sorted(dict, key=dict.get, reverse=True)
+        countlist = sorted(countlist, reverse=True)
+        for i in range(3):
+            countvalues.append(str(countlist[i]))
+            datevalues.append(dict[i])
+        context['countvalues'] = ','.join((countvalues))
+        context['datevalues'] = ','.join((datevalues))
+        context['date'] = datevalues
+
+        #   display collection by month,week,day
+
+        cunrent_month = datetime.now().month
+        monthly_total = Order.objects.filter(bill_date__month=cunrent_month).aggregate(Sum('bill_total'))
+        context['month'] = monthly_total['bill_total__sum']
+        cunrent_week = date.today().isocalendar()[1]
+        weekly_total = Order.objects.filter(bill_date__week=cunrent_week).aggregate(Sum('bill_total'))
+        context['week'] = weekly_total['bill_total__sum']
+        cunrent_day = date.today()
+        daily_total = Order.objects.filter(bill_date=cunrent_day).aggregate(Sum('bill_total'))
+        context['daily'] = daily_total['bill_total__sum']
+
+        #   progress bar
+
+        listofproducts, listofcount = [], []
+        product_dict = {}
+        for item in Items.objects.all():
+            listofproducts.append(item.item_name)
+        for item in listofproducts:
+            solditemcount = 0
+            obj = OrderLine.objects.filter(Q(product_name__item_name=item) & Q(bill_number__bill_date=cunrent_day))
+            for i in obj:
+                solditemcount += i.product_qty
+                product_dict[item] = solditemcount
+        toplist = sorted(product_dict, key=product_dict.get, reverse=True)
+        for item in toplist:
+            if item in product_dict:
+                listofcount.append(product_dict[item])
+        if len(toplist) >= 5:
+            context['toplist'] = toplist[:5]
+        else:
+            context['toplist'] = toplist
+        context['count'] = listofcount
+
+        return render(request,self.template_name,context)

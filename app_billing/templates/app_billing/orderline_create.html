@@ -1,13 +1,19 @@
 {% extends 'app_billing/admin_base.html' %}
 {% block body_block %}
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Create Bill">
-    {% if total %}
-    <h1>Total:{{total}}</h1>
-    {% endif %}
-    <table>
+<div class="row">
+    <div class="col-lg-1 col-sm-1"></div>
+    <div class="col">
+                <form method="post">
+                    {{form.as_p}}
+                    {%csrf_token%}
+                    <input type="submit" class="btn btn-primary" value="Add another">
+                </form>
+    </div>
+    <div class="col" style="text-align: center;margin-top:90px">
+                <h1>Total: {{total}}</h1>
+    </div>
+</div>
+    <table class="table">
         <tr>
             <td>Bill Number</td>
              <td>Product Name</td>
@@ -25,6 +31,6 @@
         </tr>
         {% endfor %}
     </table>
-    <a href="{% url 'generatebill' billnum %}">Generate Bill</a>
+    <a href="{% url 'generatebill' billnum %}" class="btn btn-primary" >Generate Bill</a>
 </form>
 {% endblock %}

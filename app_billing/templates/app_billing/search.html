@@ -3,9 +3,9 @@
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <input type="submit" value="search">
+    <input type="submit" class="btn btn-primary"  value="search">
 </form>
-<table>
+<table class="table">
         <tr>
             <td>Bill Number</td>
              <td>Product Name</td>

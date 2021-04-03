@@ -15,9 +15,9 @@
         <td>{{ product.purchase_price }}</td>
         <td>{{ product.selling_price }}</td>
          <td>{{ product.purchase_date }}</td>
-        <td><a href="{% url 'productview' product.id %}">View</a> </td>
-        <td><a href="{% url 'productdelete' product.id %}">Delete</a> </td>
-        <td><a href="{% url 'productedit' product.id %}">Edit</a> </td>
+        <td><a href="{% url 'productview' product.id %}" class="btn btn-primary" >View</a> </td>
+        <td><a href="{% url 'productdelete' product.id %}" class="btn btn-primary" >Delete</a> </td>
+        <td><a href="{% url 'productedit' product.id %}" class="btn btn-primary" >Edit</a> </td>
 
     </tr>
     {% endfor %}
